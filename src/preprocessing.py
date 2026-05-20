@@ -55,7 +55,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def build_preprocessing_pipeline(df: pd.DataFrame) -> Pipeline:
+def build_preprocessor(df: pd.DataFrame) -> ColumnTransformer:
     cat_cols = df.select_dtypes(include="object").columns.tolist()
     num_cols = df.select_dtypes(include="number").columns.tolist()
 
@@ -69,14 +69,12 @@ def build_preprocessing_pipeline(df: pd.DataFrame) -> Pipeline:
         ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
     ])
 
-    preprocessor = ColumnTransformer(
+    return ColumnTransformer(
         transformers=[
             ("num", numeric_pipeline, num_cols),
             ("cat", categorical_pipeline, cat_cols),
         ]
     )
-
-    return Pipeline(steps=[("preprocessor", preprocessor)])
 
 
 def plot_correlation_matrix(df: pd.DataFrame, figsize: tuple = (16, 12)) -> None:
