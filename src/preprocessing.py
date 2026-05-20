@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
@@ -47,21 +48,10 @@ def analyze_missing_values(df: pd.DataFrame) -> None:
     print(result.sort_values("percent", ascending=False).to_string())
 
 
-def impute_and_clean_data(df: pd.DataFrame, strategy: str = "median") -> pd.DataFrame:
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df = df.drop(columns=["id"], errors="ignore")
     df.drop_duplicates(inplace=True)
-
-    numeric_cols = df.select_dtypes(include="number").columns
-    for col in numeric_cols:
-        if df[col].isnull().any():
-            if strategy == "median":
-                df[col] = df[col].fillna(df[col].median())
-            elif strategy == "mean":
-                df[col] = df[col].fillna(df[col].mean())
-            else:
-                raise ValueError(f"Nieznana strategia: {strategy!r}. Użyj 'median' lub 'mean'.")
-
     return df
 
 
@@ -69,10 +59,20 @@ def build_preprocessing_pipeline(df: pd.DataFrame) -> Pipeline:
     cat_cols = df.select_dtypes(include="object").columns.tolist()
     num_cols = df.select_dtypes(include="number").columns.tolist()
 
+    numeric_pipeline = Pipeline([
+        ("imputer", SimpleImputer(strategy="median")),
+        ("scaler", StandardScaler()),
+    ])
+
+    categorical_pipeline = Pipeline([
+        ("imputer", SimpleImputer(strategy="most_frequent")),
+        ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
+    ])
+
     preprocessor = ColumnTransformer(
         transformers=[
-            ("num", StandardScaler(), num_cols),
-            ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), cat_cols),
+            ("num", numeric_pipeline, num_cols),
+            ("cat", categorical_pipeline, cat_cols),
         ]
     )
 
@@ -127,6 +127,6 @@ def split_X_y(df: pd.DataFrame, target_col: str = "satisfaction") -> tuple:
 
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    df["total_delay"] = df["Departure Delay in Minutes"] + df["Arrival Delay in Minutes"].fillna(0)
+    df["total_delay"] = df["Departure Delay in Minutes"] + df["Arrival Delay in Minutes"]
     df["avg_service_score"] = df[SERVICE_COLS].mean(axis=1)
     return df
