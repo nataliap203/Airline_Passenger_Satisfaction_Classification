@@ -51,7 +51,7 @@ def main():
         X_s, y_s = sample_training_data(X_train, y_train, sample_size=sample_size, random_state=RANDOM_STATE)
 
         tabpfn = build_tabpfn_pipeline(copy.deepcopy(preprocessor), n_estimators=TABPFN_N_ESTIMATORS)
-        train_tabpfn(tabpfn, X_train, y_train, sample_size=sample_size, random_state=RANDOM_STATE)
+        train_tabpfn(tabpfn, X_s, y_s)
         metrics = evaluate_pipeline(tabpfn, X_test, y_test)
         records.append({"model": "TabPFN", "sample_size": sample_size, **metrics})
         print(f"  TabPFN:  f1={metrics['f1']:.4f}  roc_auc={metrics['roc_auc']:.4f}")

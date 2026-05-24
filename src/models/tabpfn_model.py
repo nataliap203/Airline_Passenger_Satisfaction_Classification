@@ -40,11 +40,8 @@ def train_tabpfn(
     pipeline: Pipeline,
     X_train: pd.DataFrame,
     y_train: pd.Series,
-    sample_size: int = 1000,
-    random_state: int = 42,
 ) -> Pipeline:
-    X_sample, y_sample = sample_training_data(X_train, y_train, sample_size, random_state)
-    pipeline.fit(X_sample, y_sample)
+    pipeline.fit(X_train, y_train)
     return pipeline
 
 
