@@ -18,6 +18,7 @@ def build_xgboost_pipeline(
     learning_rate: float = 0.1,
     n_estimators: int = 300,
     random_state: int = 42,
+    n_jobs: int = -1,
 ) -> Pipeline:
     model = XGBClassifier(
         max_depth=max_depth,
@@ -25,7 +26,7 @@ def build_xgboost_pipeline(
         n_estimators=n_estimators,
         eval_metric="logloss",
         random_state=random_state,
-        n_jobs=-1,
+        n_jobs=n_jobs,
     )
     return Pipeline(steps=[("preprocessor", preprocessor), ("model", model)])
 
