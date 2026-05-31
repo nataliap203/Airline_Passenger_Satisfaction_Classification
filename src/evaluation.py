@@ -1,5 +1,13 @@
+import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.metrics import accuracy_score, classification_report, f1_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    average_precision_score,
+    classification_report,
+    f1_score,
+    precision_recall_curve,
+    roc_auc_score,
+)
 from sklearn.model_selection import StratifiedKFold, cross_validate
 
 
@@ -20,6 +28,23 @@ def evaluate(model, X_test, y_test) -> pd.Series:
     print(classification_report(y_test, y_pred, target_names=["dissatisfied", "satisfied"]))
 
     return metrics
+
+
+def plot_pr_curve(model, X_test: pd.DataFrame, y_test: pd.Series, label: str = "") -> None:
+    y_prob = model.predict_proba(X_test)[:, 1]
+    precision, recall, _ = precision_recall_curve(y_test, y_prob)
+    ap = average_precision_score(y_test, y_prob)
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    ax.plot(recall, precision, linewidth=2,
+            label=f"{label} (AP={ap:.4f})" if label else f"AP={ap:.4f}")
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.set_title("Krzywa Precision-Recall")
+    ax.legend()
+    ax.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.show()
 
 
 def cross_validate_model(

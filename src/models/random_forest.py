@@ -14,11 +14,10 @@ PARAM_GRID = {
 
 def build_random_forest_pipeline(
     preprocessor: ColumnTransformer,
-    max_depth: int = None,
+    max_depth: int | None = None,
     n_estimators: int = 300,
     min_samples_split: int = 2,
     random_state: int = 42,
-    n_jobs: int = -1,
 ) -> Pipeline:
 
     model = RandomForestClassifier(
@@ -26,7 +25,7 @@ def build_random_forest_pipeline(
         n_estimators=n_estimators,
         min_samples_split=min_samples_split,
         random_state=random_state,
-        n_jobs=n_jobs,
+        n_jobs=1,
     )
 
     return Pipeline(steps=[("preprocessor", preprocessor), ("model", model)])

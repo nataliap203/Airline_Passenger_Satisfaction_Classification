@@ -7,16 +7,17 @@ from sklearn.pipeline import Pipeline
 
 PARAM_GRID = {
     "model__C": [0.01, 0.1, 1.0, 10.0],
-    "model__l1_ratio": [0.0, 1.0],
+    "model__l1_ratio": [0.0, 1.0],  # 0.0=L2, 1.0=L1
 }
 
 
 def build_logistic_regression_pipeline(
     preprocessor: ColumnTransformer,
     C: float = 1.0,
-    l1_ratio: float = 0.0,
+    l1_ratio: float = 0.0,  # 0.0=L2, 1.0=L1
     max_iter: int = 5000,
     random_state: int = 42,
+    selector=None,
 ) -> Pipeline:
 
     model = LogisticRegression(
@@ -27,7 +28,12 @@ def build_logistic_regression_pipeline(
         random_state=random_state,
     )
 
-    return Pipeline(steps=[("preprocessor", preprocessor), ("model", model)])
+    steps = [("preprocessor", preprocessor)]
+    if selector is not None:
+        steps.append(("selector", selector))
+    steps.append(("model", model))
+
+    return Pipeline(steps=steps)
 
 
 def train_logistic_regression(
