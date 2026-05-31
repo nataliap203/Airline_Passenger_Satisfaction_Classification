@@ -5,9 +5,14 @@ from typing import Callable
 
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.metrics import f1_score, accuracy_score, roc_auc_score
+
+from src.models.logistic_regression import build_logistic_regression_pipeline
+
+# Najlepsze parametry LR znalezione przez GridSearchCV (l1_ratio: 0.0=L2, 1.0=L1)
+_BEST_LR_C = 0.01
+_BEST_LR_L1_RATIO = 1.0
 
 
 def run_selectkbest_experiment(
@@ -33,12 +38,14 @@ def run_selectkbest_experiment(
         y_pred = pipeline.predict(X_test)
         y_prob = pipeline.predict_proba(X_test)[:, 1]
 
-        records.append({
-            "k": k,
-            "accuracy": accuracy_score(y_test, y_pred),
-            "f1": f1_score(y_test, y_pred),
-            "roc_auc": roc_auc_score(y_test, y_prob),
-        })
+        records.append(
+            {
+                "k": k,
+                "accuracy": accuracy_score(y_test, y_pred),
+                "f1": f1_score(y_test, y_pred),
+                "roc_auc": roc_auc_score(y_test, y_prob),
+            }
+        )
 
         print(f"k={k} accuracy={records[-1]['accuracy']:.4f} f1={records[-1]['f1']:.4f} roc_auc={records[-1]['roc_auc']:.4f}")
 
@@ -58,11 +65,17 @@ def get_feature_scores(
     selector: SelectKBest = pipeline.named_steps["selector"]
     feature_names = _get_feature_names(pipeline)
 
-    scores_df = pd.DataFrame({
-        "feature": feature_names,
-        "score": selector.scores_,
-        "p_value": selector.pvalues_,
-    }).sort_values("score", ascending=False).reset_index(drop=True)
+    scores_df = (
+        pd.DataFrame(
+            {
+                "feature": feature_names,
+                "score": selector.scores_,
+                "p_value": selector.pvalues_,
+            }
+        )
+        .sort_values("score", ascending=False)
+        .reset_index(drop=True)
+    )
 
     scores_df["rank"] = scores_df.index + 1
 
@@ -77,11 +90,10 @@ def plot_k_vs_metrics(results: pd.DataFrame) -> None:
 
     for metric, color, marker in [
         ("accuracy", "#4575b4", "o"),
-        ("f1",       "#d73027", "s"),
-        ("roc_auc",  "#1a9850", "^"),
+        ("f1", "#d73027", "s"),
+        ("roc_auc", "#1a9850", "^"),
     ]:
-        ax.plot(x, results[metric], label=metric, color=color,
-                marker=marker, linewidth=2, markersize=7)
+        ax.plot(x, results[metric], label=metric, color=color, marker=marker, linewidth=2, markersize=7)
 
     ax.set_xticks(list(x))
     ax.set_xticklabels(k_labels)
@@ -100,9 +112,17 @@ def plot_feature_scores(scores_df: pd.DataFrame, top_n: int = 20) -> None:
     fig, ax = plt.subplots(figsize=(9, max(5, top_n * 0.4)))
     bars = ax.barh(top["feature"], top["score"], color="#4575b4", edgecolor="white")
 
-    for bar, rank in zip(bars, top["rank"].iloc[::-1]):
-        ax.text(bar.get_width() * 0.01, bar.get_y() + bar.get_height() / 2,
-                f"#{rank}", va="center", ha="left", fontsize=8, color="white", fontweight="bold")
+    for bar, rank in zip(bars, top["rank"]):
+        ax.text(
+            bar.get_width() * 0.01,
+            bar.get_y() + bar.get_height() / 2,
+            f"#{rank}",
+            va="center",
+            ha="left",
+            fontsize=8,
+            color="black",
+            fontweight="bold",
+        )
 
     ax.set_xlabel("Wynik F-statystyki (f_classif)")
     ax.set_title(f"Top {top_n} najważniejszych cech wg SelectKBest")
@@ -117,18 +137,15 @@ def _build_pipeline(
     score_func=f_classif,
     random_state: int = 42,
 ) -> Pipeline:
-
-    return Pipeline(steps=[
-        ("preprocessor", preprocessor),
-        ("selector", SelectKBest(score_func=score_func, k=k)),
-        ("model", LogisticRegression(
-            solver="saga",
-            max_iter=5000,
-            random_state=random_state,
-            C=0.01,
-            l1_ratio=1.0
-        )),
-    ])
+    selector = SelectKBest(score_func=score_func, k=k)
+    return build_logistic_regression_pipeline(
+        preprocessor,
+        C=_BEST_LR_C,
+        l1_ratio=_BEST_LR_L1_RATIO,
+        max_iter=5000,
+        random_state=random_state,
+        selector=selector,
+    )
 
 
 def _get_feature_names(pipeline: Pipeline) -> list[str]:

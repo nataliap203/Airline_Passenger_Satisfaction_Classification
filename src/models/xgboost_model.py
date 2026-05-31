@@ -18,7 +18,6 @@ def build_xgboost_pipeline(
     learning_rate: float = 0.1,
     n_estimators: int = 300,
     random_state: int = 42,
-    n_jobs: int = -1,
 ) -> Pipeline:
     model = XGBClassifier(
         max_depth=max_depth,
@@ -26,7 +25,7 @@ def build_xgboost_pipeline(
         n_estimators=n_estimators,
         eval_metric="logloss",
         random_state=random_state,
-        n_jobs=n_jobs,
+        n_jobs=1,
     )
     return Pipeline(steps=[("preprocessor", preprocessor), ("model", model)])
 
@@ -44,11 +43,14 @@ def tune_hyperparameters(
     preprocessor: ColumnTransformer,
     X_train: pd.DataFrame,
     y_train: pd.Series,
-    param_grid: dict = PARAM_GRID,
+    param_grid: dict | None = None,
     cv: int = 5,
     scoring: str = "f1",
     random_state: int = 42,
 ) -> GridSearchCV:
+    if param_grid is None:
+        param_grid = PARAM_GRID
+
     pipeline = build_xgboost_pipeline(preprocessor, random_state=random_state)
     search = GridSearchCV(
         estimator=pipeline,
