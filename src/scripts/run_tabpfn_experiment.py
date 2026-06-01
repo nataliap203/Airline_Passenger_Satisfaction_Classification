@@ -6,6 +6,7 @@ Wyniki zapisywane do: data/tabpfn_experiment_results.csv
 """
 
 import copy
+import os
 import sys
 import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
@@ -17,7 +18,8 @@ from src.models.tabpfn_model import build_tabpfn_pipeline, train_tabpfn, sample_
 from src.models.xgboost_model import build_xgboost_pipeline, train_xgboost
 from src.models.random_forest import build_random_forest_pipeline, train_random_forest
 
-SAMPLE_SIZES = [100, 250, 500]
+_env_sizes = os.environ.get("TABPFN_SAMPLE_SIZES")
+SAMPLE_SIZES = [int(s) for s in _env_sizes.split(",")] if _env_sizes else [100, 250, 500]
 RANDOM_STATE = 42
 XGB_PARAMS = {"max_depth": 7, "learning_rate": 0.1, "n_estimators": 300}
 RF_PARAMS = {"max_depth": None, "n_estimators": 500, "min_samples_split": 5}

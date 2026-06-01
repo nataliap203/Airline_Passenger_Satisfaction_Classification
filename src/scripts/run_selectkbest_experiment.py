@@ -1,3 +1,4 @@
+import functools
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -156,11 +157,11 @@ def plot_feature_scores(scores_df: pd.DataFrame, top_n: int = 20) -> None:
             va="center",
             ha="left",
             fontsize=8,
-            color="white",
+            color="black",
             fontweight="bold",
         )
 
-    x_label = "Wynik F-statystyki" if sf == "f_classif" else "Mutual information (znormalizowana)"
+    x_label = "Wynik F-statystyki (znormalizowany)" if sf == "f_classif" else "Mutual information (znormalizowana)"
 
     ax.set_xlabel(x_label)
     ax.set_title(f"Top {top_n} najważniejszych cech — {sf}")
@@ -176,6 +177,8 @@ def _build_pipeline(
     score_func: Callable = f_classif,
     random_state: int = 42,
 ) -> Pipeline:
+    if score_func is mutual_info_classif:
+        score_func = functools.partial(mutual_info_classif, random_state=random_state)
 
     selector = SelectKBest(score_func=score_func, k=k)
     return build_logistic_regression_pipeline(
