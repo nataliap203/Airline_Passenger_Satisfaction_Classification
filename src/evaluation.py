@@ -7,6 +7,7 @@ from sklearn.metrics import (
     f1_score,
     precision_recall_curve,
     roc_auc_score,
+    roc_curve,
 )
 from sklearn.model_selection import StratifiedKFold, cross_validate
 
@@ -41,6 +42,24 @@ def plot_pr_curve(model, X_test: pd.DataFrame, y_test: pd.Series, label: str = "
     ax.set_xlabel("Recall")
     ax.set_ylabel("Precision")
     ax.set_title("Krzywa Precision-Recall")
+    ax.legend()
+    ax.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_roc_curve(model, X_test: pd.DataFrame, y_test: pd.Series, label: str = "") -> None:
+    y_prob = model.predict_proba(X_test)[:, 1]
+    fpr, tpr, _ = roc_curve(y_test, y_prob)
+    auc = roc_auc_score(y_test, y_prob)
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    ax.plot(fpr, tpr, linewidth=2,
+            label=f"{label} (AUC={auc:.4f})" if label else f"AUC={auc:.4f}")
+    ax.plot([0, 1], [0, 1], "k--", linewidth=1, label="Losowy klasyfikator")
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate")
+    ax.set_title("Krzywa ROC")
     ax.legend()
     ax.grid(alpha=0.3)
     plt.tight_layout()
