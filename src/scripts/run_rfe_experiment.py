@@ -17,32 +17,9 @@ _BEST_LR_C = 0.01
 _BEST_LR_L1_RATIO = 1.0
 
 
-class _NaNSafeRF(RandomForestClassifier):
-    """RF z konwersją do float32 i czyszczeniem NaN w feature_importances_.
-
-    Gdy cuml.accel jest aktywne, RandomForestClassifier jest zastąpiony przez
-    implementację cuML, która wymaga float32 i może zwracać NaN w importances.
-    Ten wrapper zapewnia kompatybilność z sklearn RFE w obu środowiskach.
-    """
-
-    def fit(self, X, y, **kw):
-        return super().fit(np.asarray(X, dtype=np.float32), y, **kw)
-
-    @property
-    def feature_importances_(self):
-        fi = super().feature_importances_
-        return np.nan_to_num(np.asarray(fi, dtype=np.float64), nan=0.0)
-
-    def predict(self, X):
-        return super().predict(np.asarray(X, dtype=np.float32))
-
-    def predict_proba(self, X):
-        return super().predict_proba(np.asarray(X, dtype=np.float32))
-
-
 _RFE_ESTIMATORS = {
     "LR": LogisticRegression(C=0.01, l1_ratio=1.0, solver="saga", max_iter=5000, random_state=42),
-    "RF": _NaNSafeRF(n_estimators=100, random_state=42, n_jobs=1),
+    "RF": RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=1),
 }
 
 N_FEATURES_VALUES = [5, 10, 15, 20, 25, "all"]
