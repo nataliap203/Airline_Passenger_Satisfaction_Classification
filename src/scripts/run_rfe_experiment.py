@@ -154,6 +154,42 @@ def plot_feature_rankings(
     plt.show()
 
 
+def plot_feature_rankings_comparison(rankings_lr: pd.DataFrame, rankings_rf: pd.DataFrame, top_n: int = 20) -> None:
+    df_lr = rankings_lr[["feature", "ranking"]].rename(columns={"ranking": "rank_lr"})
+    df_rf = rankings_rf[["feature", "ranking"]].rename(columns={"ranking": "rank_rf"})
+
+    merged = df_lr.merge(df_rf, on="feature")
+    top_mask = (merged["rank_lr"] <= top_n) | (merged["rank_rf"] <= top_n)
+    merged = merged[top_mask]
+
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.scatter(merged["rank_lr"], merged["rank_rf"], color="#4575b4", alpha=0.7, s=60, zorder=3)
+
+    max_rank = merged[["rank_lr", "rank_rf"]].max().max()
+    ax.plot([1, max_rank], [1, max_rank], "k--", linewidth=0.8, alpha=0.5, label="pełna zgodność")
+
+    for _, row in merged.iterrows():
+        ax.annotate(
+            row["feature"],
+            (row["rank_lr"], row["rank_rf"]),
+            fontsize=6.5,
+            alpha=0.8,
+            xytext=(3, 3),
+            textcoords="offset points",
+        )
+
+    ax.set_xlabel("Ranga RFE — LR")
+    ax.set_ylabel("Ranga RFE — RF")
+    ax.set_title(f"Zgodność rankingów RFE: LR vs RF (top {top_n} wg każdego estymatora)")
+    ax.legend()
+    ax.invert_xaxis()
+    ax.invert_yaxis()
+    ax.grid(linestyle="--", alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+
 def _build_rfe_pipeline(
     preprocessor: ColumnTransformer,
     estimator,
