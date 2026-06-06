@@ -166,6 +166,49 @@ def plot_feature_scores(scores_df: pd.DataFrame, top_n: int = 20) -> None:
     plt.show()
 
 
+def plot_rank_comparison(scores_df: pd.DataFrame, top_n: int = 20) -> None:
+    funcs = scores_df["score_func"].unique()
+
+    if len(funcs) < 2:
+        print("rank_comparison wymaga co najmniej dwóch score_func.")
+        return
+
+    f1_label, f2_label = funcs[0], funcs[1]
+    df1 = scores_df[scores_df["score_func"] == f1_label][["feature", "rank"]].rename(columns={"rank": "rank_f1"})
+    df2 = scores_df[scores_df["score_func"] == f2_label][["feature", "rank"]].rename(columns={"rank": "rank_f2"})
+
+    merged = df1.merge(df2, on="feature")
+    top_mask = (merged["rank_f1"] <= top_n) | (merged["rank_f2"] <= top_n)
+    merged = merged[top_mask]
+
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.scatter(merged["rank_f1"], merged["rank_f2"], color="#4575b4", alpha=0.7, s=60)
+
+    max_rank = merged[["rank_f1", "rank_f2"]].max().max()
+    ax.plot([1, max_rank], [1, max_rank], "k--", linewidth=0.8, alpha=0.5, label="pełna zgodność")
+
+    for _, row in merged.iterrows():
+        ax.annotate(
+            row["feature"],
+            (row["rank_f1"], row["rank_f2"]),
+            fontsize=6.5,
+            alpha=0.8,
+            xytext=(3, 3),
+            textcoords="offset points",
+        )
+
+    ax.set_xlabel(f"Ranga — {f1_label}")
+    ax.set_ylabel(f"Ranga — {f2_label}")
+    ax.set_title(f"Zgodność rankingów cech (top {top_n} wg każdej metody)")
+    ax.legend()
+    ax.invert_xaxis()
+    ax.invert_yaxis()
+    ax.grid(linestyle="--", alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+
 def _build_pipeline(
     preprocessor: ColumnTransformer,
     k: int | str,
