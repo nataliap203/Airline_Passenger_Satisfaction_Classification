@@ -52,6 +52,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df = df.drop(columns=["id"], errors="ignore")
     df.drop_duplicates(inplace=True)
+    df.dropna(inplace=True)
     return df
 
 

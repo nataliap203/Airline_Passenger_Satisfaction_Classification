@@ -1,5 +1,6 @@
 import copy
 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.compose import ColumnTransformer
@@ -14,6 +15,7 @@ from src.models.logistic_regression import build_logistic_regression_pipeline
 # Najlepsze parametry LR znalezione przez GridSearchCV (l1_ratio: 0.0=L2, 1.0=L1)
 _BEST_LR_C = 0.01
 _BEST_LR_L1_RATIO = 1.0
+
 
 _RFE_ESTIMATORS = {
     "LR": LogisticRegression(C=0.01, l1_ratio=1.0, solver="saga", max_iter=5000, random_state=42),
