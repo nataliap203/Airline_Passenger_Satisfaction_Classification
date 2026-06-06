@@ -110,18 +110,13 @@ def plot_k_vs_metrics(results: pd.DataFrame) -> None:
     x = np.arange(len(k_labels))
 
     metrics = ["accuracy", "f1", "roc_auc"]
-    colors = {
-        "f_classif": "#4575b4",
-        "mutual_info_classif": "#d73027",
-    }
 
     fig, axes = plt.subplots(1, 3, figsize=(16, 5), sharey=False)
 
     for ax, m in zip(axes, metrics):
         for sf in score_funcs:
             subset = results[results["score_func"] == sf]
-            color = colors.get(sf, "#555")
-            ax.plot(x, subset[m].values, "o-", label=sf, color=color, linewidth=2, markersize=7)
+            ax.plot(x, subset[m].values, "o-", label=sf, linewidth=2, markersize=7)
 
         ax.set_xticks(x)
         ax.set_xticklabels(k_labels)
